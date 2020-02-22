@@ -10,7 +10,6 @@ def main():
 
     # set device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
-    device = torch.device('cuda:3')
     # device = torch.device('cpu')
     
     # 通过系统描述设置线程
@@ -18,6 +17,7 @@ def main():
         num_workers = 0 
         root = r'D:\workSpace\Lane-Segmentation-Solution\data_list'
     else:
+        device = torch.device('cuda:3')
         num_workers = 4
         root = r"./data_list"
 
@@ -29,7 +29,11 @@ def main():
     lr,num_epochs =0.001, 5
 
     # perpare model 
-    model = pretraind.get_model_instance('deeplabv3_resnet50')
+    model = pretraind.get_model_instance('fcn_resnet50')
+
+    # print model as a file for debug
+    with open('.\debug.log','w') as f:
+        print(model,file=f)
 
     trans=[]
     trans.append(torchvision.transforms.Resize((768,256)))
@@ -140,7 +144,8 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
           y = y.to(device)
 
           # 计算y_hat 
-          y_hat = net(x)
+          print(x.shape)
+          y_hat = net(x)['out']
 
           # 计算loss
           l = loss(y_hat, y)
