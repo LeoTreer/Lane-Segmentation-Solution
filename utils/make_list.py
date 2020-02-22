@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import pandas as pd 
 from sklearn.utils import shuffle
 
@@ -8,7 +9,7 @@ label_dir = ''
 
 env = os.environ.get('ENV', 'development') 
 
-if env == 'development':
+if sys.platform.startswith('win'): 
     image_dir = r'D:\workSpace\CV\1. dataSet\Lane Stagement 初赛数据\ColorImage'
     label_dir = r'D:\workSpace\CV\1. dataSet\Lane Stagement 初赛数据\Gray_Label'
     save_path = r'D:\workSpace\Lane-Segmentation-Solution\data_list'
