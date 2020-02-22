@@ -2,6 +2,7 @@ import torch
 import torchvision
 import sys
 import time
+from PIL import Image
 from models import pretraind 
 from utils import data_feeder
 
@@ -9,18 +10,20 @@ def main():
 
     # set device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
-
+    device = torch.device('cuda:3')
+    # device = torch.device('cpu')
+    
     # 通过系统描述设置线程
     if sys.platform.startswith('win'):
         num_workers = 0 
         root = r'D:\workSpace\Lane-Segmentation-Solution\data_list'
     else:
         num_workers = 4
-        root = r"/root/data/"
+        root = r"./data_list"
 
     # set num_classes,batch_size
     num_classes =2 
-    batch_size = 10
+    batch_size = 1 
 
     # learning rate and num_epochs
     lr,num_epochs =0.001, 5
@@ -29,14 +32,22 @@ def main():
     model = pretraind.get_model_instance('deeplabv3_resnet50')
 
     trans=[]
+    trans.append(torchvision.transforms.Resize((768,256)))
     trans.append(torchvision.transforms.ToTensor())
-    transeform = torchvision.transforms.Compose(trans)
+    img_transform = torchvision.transforms.Compose(trans)
+
+    trans = []
+    trans.append(torchvision.transforms.Resize((768,256),interpolation=Image.NEAREST))
+    trans.append(torchvision.transforms.ToTensor())
+    label_transform = torchvision.transforms.Compose(trans)
+
+    print('root is {}'.format(root))
 
     # prepare dataset
-    train_data = data_feeder.LSSDataset(root = root, dataName='train', transforms=transeform)
-    test_data = data_feeder.LSSDataset(root = root, dataName='test', transforms=transeform)
-    train_iter = torch.utils.data.DataLoader(train_data, batch_size=2, shuffle=False, num_workers=num_workers)
-    test_iter = torch.utils.data.DataLoader(test_data, batch_size=2, shuffle=False, num_workers=num_workers)
+    train_data = data_feeder.LSSDataset(root = root, dataName='train', img_transforms=img_transform, label_transforms=label_transform)
+    test_data = data_feeder.LSSDataset(root = root, dataName='test', img_transforms=img_transform, label_transforms=label_transform)
+    train_iter = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_iter = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     # constrct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
@@ -120,8 +131,9 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
 
       for x, y in train_iter:
           
+          print('epoch is {}'.format(epoch))
           # 后续优化
-          y = y['label'] 
+          # y = y['label'] 
 
           # 将数据放到GPU
           x = x.to(device)
@@ -139,7 +151,7 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
           optimizer.step()
 
           mean_loss += l.cpu().item()
-          mean_iu += label_accuracy_score(y, y_hat,  num_class=8)[2]
+          mean_iu += label_accuracy_score(y, y_hat,  num_class=8)[2].cpu().item()
         #   mean_acc_sum += (y_hat.argmax(axis=1)==y).sum().cpu().item()
           train_l_sum += l.cpu().item() # 把值放到CPU里并取出来
           n += y.shape[0]

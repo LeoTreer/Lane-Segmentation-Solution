@@ -12,14 +12,16 @@ class LSSDataset(Dataset):
     """
         百度车道线检测数据集
     """
-    def __init__(self, root, dataName,transforms=None):
+    def __init__(self, root, dataName,img_transforms=None, label_transforms=None):
         self.root = root
         self.dataName = dataName
-        self.transforms =transforms
+        self.img_transforms =img_transforms
+        self.label_transforms=label_transforms
         
         #  加载图像列表
         path = os.path.join(root, dataName + '.csv')
-        
+        print('csv path is {}'.format(path))
+
         if os.path.exists(path):
             self.data = pd.read_csv(path)
         else:
@@ -36,18 +38,20 @@ class LSSDataset(Dataset):
         img = Image.open(self.image[idx])
         # img = torch.as_tensor(np.transpose(np.array(img), (2, 0, 1)),  dtype=torch.float32)
         # img = np.transpose(np.array(img, dtype=np.uint8), (2, 0, 1))
-        img = np.array(img, dtype=np.uint8)
-
+        # img = np.array(img, dtype=np.uint8)
+    
         label = Image.open(self.label[idx]) 
         label = process_labels.decode_labels(np.array(label, dtype=np.uint8)) 
+        label = Image.fromarray(label)
 
-        target = {}
-        target['label'] = label
+        if self.img_transforms is not None:
+            img = self.img_transforms(img)
+        
+        if self.label_transforms is not None:
+            label = self.label_transforms(label)
 
-        if self.transforms is not None:
-            img = self.transforms(img)
-
-        return img, target
+        print('idx is {}'.format(idx))
+        return img, label
 
     def __len__(self):
         return self.data.shape[0]
