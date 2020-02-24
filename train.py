@@ -89,28 +89,28 @@ def evaluate(model, data_loader, device, num_classes):
     #  生成混淆矩阵
     # confmat = 
 
-def _get_confuseMetric(label_true, label_pred, n_class):
+def _get_confuseMetric(label_true, label_pred, num_class):
 
     # 提取有效值
-    mask = (label_true >= 0) & (label_true < n_class)
+    mask = (label_true >= 0) & (label_true < num_class)
 
     # np.bincount, 生成索引=数值，value=数值出现次数的Vector
     hist = np.bincount(
         # 进行位置映射
-        n_class * label_true[mask].astype(int) +
-        label_pred[mask] , minlength=n_class ** 2).reshape(n_class, n_class)
+        num_class * label_true[mask].astype(int) +
+        label_pred[mask] , minlength=num_class ** 2).reshape(num_class, num_class)
     return hist
 
-def label_accuracy_score(label_trues, label_preds, n_class):
+def label_accuracy_score(label_trues, label_preds, num_class):
     """计算如下Metric
     - overall accuracy
     - mean accuracy
     - mean IU
     - fwavacc
     """
-    hist = np.zero((n_class, n_class))
+    hist = np.zeros((num_class, num_class))
     for lt, lp in zip(label_trues, label_preds):
-        hist += _get_confuseMetric(lt.flatten(), lp.flatten(), n_class)
+        hist += _get_confuseMetric(lt.flatten(), lp.flatten(), num_class)
     acc = np.diag(hist).sum() / hist.sum() # Pixel Accuracy
     with np.errstate(divide='ignore', invalid='ignore'): # 错误管理
         acc_cls = np.diag(hist) / hist.sum(axis=1) # TP / TP + TN
@@ -147,10 +147,14 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
           # 计算y_hat 
           print(x.shape)
           y_hat = net(x)['out']
-                 
-        #   one_ hot = 
+        
+          # get_numpy
+
+          y_hat_flat = torch.flatten(y_hat[0],1).transpose(1,0)
+          target = torch.flatten(y[0][0],0)
+
           # 计算loss
-          l = loss(one_hot_encode(y_hat.argmax(axis=1)), one_hot_encode(y))
+          l = loss(y_hat_flat,target.long())
 
           # 更新梯度
           optimizer.zero_grad()
@@ -158,7 +162,7 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
           optimizer.step()
 
           mean_loss += l.cpu().item()
-          mean_iu += label_accuracy_score(y, y_hat,  num_class=8)[2].cpu().item()
+          mean_iu += label_accuracy_score(y.detach().numpy(), y_hat.detach().numpy().argmax(axis=1), num_class=8)[2]
         #   mean_acc_sum += (y_hat.argmax(axis=1)==y).sum().cpu().item()
           train_l_sum += l.cpu().item() # 把值放到CPU里并取出来
           n += y.shape[0]
@@ -185,13 +189,16 @@ def one_hot_encode(label, num_class=8):
 
     if isinstance(label,torch.Tensor):
         label = label.numpy()
+    
     # 生成mask
-    mask = np.tile(np.arange(0,num_class,1).reshape(8,1,1),(1,10,10))
+    mask = np.tile(np.arange(0,num_class,1).reshape(8,1,1),(1,label.shape[-2],label.shape[-1]))
     one_hot = np.zeros_like(mask)
 
     # 生成one_hot
-    one_hot = one_hot[mask==label] =1
-    return one_hot
+    one_hot[mask==label] =1
+    one_hot = one_hot.reshape(one_hot.shape[0],-1) 
+    one_hot = one_hot.transpose((1,0))
+    return torch.Tensor(one_hot)
 
 if __name__ == "__main__":
     main()
