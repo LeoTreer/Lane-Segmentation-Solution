@@ -23,8 +23,8 @@ def main():
         root = r"./data_list"
 
     # set num_classes,batch_size
-    num_classes =2 
-    batch_size = 1 
+    num_classes =4 
+    batch_size = 5
 
     # learning rate and num_epochs
     lr,num_epochs =0.001, 5
@@ -49,8 +49,8 @@ def main():
     print('root is {}'.format(root))
 
     # prepare dataset
-    train_data = data_feeder.LSSDataset(root = root, dataName='train', img_transforms=img_transform, label_transforms=label_transform)
-    test_data = data_feeder.LSSDataset(root = root, dataName='test', img_transforms=img_transform, label_transforms=label_transform)
+    train_data = data_feeder.LSSDataset(root = root, dataName='train', img_transforms=img_transform, label_transforms=label_transform, cut_size=30)
+    test_data = data_feeder.LSSDataset(root = root, dataName='test', img_transforms=img_transform, label_transforms=label_transform, cut_size=15)
     train_iter = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     test_iter = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
@@ -162,7 +162,7 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
           optimizer.step()
 
           mean_loss += l.cpu().item()
-          mean_iu += label_accuracy_score(y.detach().numpy(), y_hat.detach().numpy().argmax(axis=1), num_class=8)[2]
+          mean_iu += label_accuracy_score(y.cpu().detach().numpy(), y_hat.cpu().detach().numpy().argmax(axis=1), num_class=8)[2]
         #   mean_acc_sum += (y_hat.argmax(axis=1)==y).sum().cpu().item()
           train_l_sum += l.cpu().item() # 把值放到CPU里并取出来
           n += y.shape[0]
@@ -180,7 +180,7 @@ def evaluate_accuracy(data_iter, net, device=None):
       with torch.no_grad():
           for x,y in data_iter:
               net.eval()   # 固定BN和DropOutnn
-              acc_sum += (net(x.to(device)).argmax(dim=1) == y.to(device)).float().sum().cpu().item()
+              acc_sum += (net(x.to(device))['out'].argmax(dim=1) == y.to(device)).float().sum().cpu().item()
               net.train()  # 切换回trian模式
               n += y.shape[0]
       return acc_sum/n

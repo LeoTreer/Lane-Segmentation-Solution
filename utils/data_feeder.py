@@ -12,15 +12,15 @@ class LSSDataset(Dataset):
     """
         百度车道线检测数据集
     """
-    def __init__(self, root, dataName,img_transforms=None, label_transforms=None):
+    def __init__(self, root, dataName,img_transforms=None, label_transforms=None, cut_size=None):
         self.root = root
         self.dataName = dataName
         self.img_transforms =img_transforms
         self.label_transforms=label_transforms
-        
+        self.cut_size = cut_size 
         #  加载图像列表
         path = os.path.join(root, dataName + '.csv')
-        print('csv path is {}'.format(path))
+       #  print('csv path is {}'.format(path))
 
         if os.path.exists(path):
             self.data = pd.read_csv(path)
@@ -54,8 +54,12 @@ class LSSDataset(Dataset):
         return img, label
 
     def __len__(self):
-        return self.data.shape[0]
-    
+        if not self.cut_size:
+            return self.data.shape[0]
+        elif self.cut_size<=self.data.shape[0]:
+            return self.cut_size
+        else:
+            return 0
 
 if __name__ == "__main__":
     import sys
