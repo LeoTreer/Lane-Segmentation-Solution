@@ -26,7 +26,7 @@ def _makeList():
     dir_iter = os.walk(image_dir)
     for parent, dirs, files in dir_iter:
         if len(files):
-            print('parent', parent)
+            # print('parent', parent)
             reObj = re.search( r'(road\d+).*(record\d+).*(camera \d)', parent, re.I)
             road, record, camera = reObj.group(1), reObj.group(2), reObj.group(3)
             label_parent =os.path.join(label_dir, "Label_"+str.lower(road), "Label", record, camera)

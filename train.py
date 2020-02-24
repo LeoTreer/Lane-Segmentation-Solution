@@ -4,14 +4,18 @@ import sys
 import time
 import numpy as np
 from PIL import Image
+from progress.bar import Bar
 from models import pretraind 
 from utils import data_feeder
 
 def main():
+    # create progress Bar 
+    print('prepare settings')
+    bar = Bar('Processing', max=6)
 
     # set device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
-    # device = torch.device('cpu')
+    bar.next()
     
     # 通过系统描述设置线程
     if sys.platform.startswith('win'):
@@ -21,6 +25,7 @@ def main():
         device = torch.device('cuda:3')
         num_workers = 4
         root = r"./data_list"
+    bar.next()
 
     # set num_classes,batch_size
     num_classes =2 
@@ -35,6 +40,7 @@ def main():
     # print model as a file for debug
     with open('.\debug.log','w') as f:
         print(model,file=f)
+        bar.next()
 
     trans=[]
     trans.append(torchvision.transforms.Resize((768,256)))
@@ -46,13 +52,17 @@ def main():
     trans.append(torchvision.transforms.ToTensor())
     label_transform = torchvision.transforms.Compose(trans)
 
-    print('root is {}'.format(root))
+    print('root is {}'.format(root)):quit
+    bar.next()
 
     # prepare dataset
     train_data = data_feeder.LSSDataset(root = root, dataName='train', img_transforms=img_transform, label_transforms=label_transform)
     test_data = data_feeder.LSSDataset(root = root, dataName='test', img_transforms=img_transform, label_transforms=label_transform)
     train_iter = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     test_iter = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    print('size:',len(train_data))
+    bar.next()
 
     # constrct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
@@ -66,6 +76,7 @@ def main():
                                                gamma=0.1)
     
     loss = torch.nn.CrossEntropyLoss()
+    bar.next()
 
     train(model, train_iter, test_iter, loss, batch_size, optimizer, device, num_epochs)
 
