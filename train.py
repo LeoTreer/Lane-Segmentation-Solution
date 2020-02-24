@@ -2,6 +2,7 @@ import torch
 import torchvision
 import sys
 import time
+import numpy as np
 from PIL import Image
 from models import pretraind 
 from utils import data_feeder
@@ -146,9 +147,10 @@ def train(net , train_iter, test_iter, loss, batch_size, optimizer, device, num_
           # 计算y_hat 
           print(x.shape)
           y_hat = net(x)['out']
-
+                 
+        #   one_ hot = 
           # 计算loss
-          l = loss(y_hat, y)
+          l = loss(one_hot_encode(y_hat.argmax(axis=1)), one_hot_encode(y))
 
           # 更新梯度
           optimizer.zero_grad()
@@ -178,6 +180,18 @@ def evaluate_accuracy(data_iter, net, device=None):
               net.train()  # 切换回trian模式
               n += y.shape[0]
       return acc_sum/n
+
+def one_hot_encode(label, num_class=8):
+
+    if isinstance(label,torch.Tensor):
+        label = label.numpy()
+    # 生成mask
+    mask = np.tile(np.arange(0,num_class,1).reshape(8,1,1),(1,10,10))
+    one_hot = np.zeros_like(mask)
+
+    # 生成one_hot
+    one_hot = one_hot[mask==label] =1
+    return one_hot
 
 if __name__ == "__main__":
     main()
