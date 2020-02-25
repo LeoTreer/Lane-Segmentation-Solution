@@ -39,9 +39,9 @@ class LSSDataset(Dataset):
         # img = torch.as_tensor(np.transpose(np.array(img), (2, 0, 1)),  dtype=torch.float32)
         # img = np.transpose(np.array(img, dtype=np.uint8), (2, 0, 1))
         # img = np.array(img, dtype=np.uint8)
-    
+        print('use img {}'.format(self.label[idx]))
         label = Image.open(self.label[idx]) 
-        label = process_labels.decode_labels(np.array(label, dtype=np.uint8)) 
+        label = process_labels.encode_labels(np.array(label, dtype=np.uint8)) 
         label = Image.fromarray(label)
 
         if self.img_transforms is not None:
@@ -50,8 +50,8 @@ class LSSDataset(Dataset):
         if self.label_transforms is not None:
             label = self.label_transforms(label)
 
-        print('idx is {}'.format(idx))
-        return img, label
+        # print('idx is {}'.format(idx))
+        return img, torch.tensor(np.array(label)).float()
 
     def __len__(self):
         if not self.cut_size:

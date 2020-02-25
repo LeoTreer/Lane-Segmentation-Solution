@@ -44,7 +44,7 @@ trainId2Color = ((0, 0, 0), (70, 130, 180), (0, 0, 142), (153, 153, 153),
 
 def encode_labels(color_mask):
     """
-    标签转灰度图
+    灰度转标签
     id to trainId
 
     Args:
@@ -62,7 +62,7 @@ def encode_labels(color_mask):
 
 def decode_labels(labels):
     """
-    灰度值转标签
+    标签转灰度
     trainId to id
 
     Args:
