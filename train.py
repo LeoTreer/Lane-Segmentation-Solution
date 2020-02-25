@@ -38,9 +38,9 @@ def main():
     model = pretraind.get_model_instance('fcn_resnet50')
 
     # print model as a file for debug
-    with open('.\debug.log','w') as f:
-        print(model,file=f)
-        bar.next()
+    # with open('.\debug.log','w') as f:
+    #     print(model,file=f)
+    bar.next()
 
     trans=[]
     trans.append(torchvision.transforms.Resize((768,256)))
@@ -122,6 +122,9 @@ def label_accuracy_score(label_trues, label_preds, num_class):
     for lt, lp in zip(label_trues, label_preds):
         hist += _get_confuseMetric(lt.flatten(), lp.flatten(), num_class)
     acc = np.diag(hist).sum() / hist.sum() # Pixel Accuracy
+    
+    print('diag',np.diag(hist))
+    
     with np.errstate(divide='ignore', invalid='ignore'): # 错误管理
         acc_cls = np.diag(hist) / hist.sum(axis=1) # TP / TP + TN
     acc_cls = np.nanmean(acc_cls) # Mean Pixel Accuracy MPA

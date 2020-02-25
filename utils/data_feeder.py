@@ -39,7 +39,7 @@ class LSSDataset(Dataset):
         # img = torch.as_tensor(np.transpose(np.array(img), (2, 0, 1)),  dtype=torch.float32)
         # img = np.transpose(np.array(img, dtype=np.uint8), (2, 0, 1))
         # img = np.array(img, dtype=np.uint8)
-        print('use img {}'.format(self.label[idx]))
+        # print('use img {}'.format(self.label[idx]))
         label = Image.open(self.label[idx]) 
         label = process_labels.encode_labels(np.array(label, dtype=np.uint8)) 
         label = Image.fromarray(label)
