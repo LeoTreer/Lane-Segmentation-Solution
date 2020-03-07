@@ -1,14 +1,16 @@
-# BAIDU Competition - Lane Segmentation
+# Pytorch Computer Visualize BaseLine
 
 ## Introduction
 
-比赛已经停止，写下这个项目是为了学习。基本上是对项目<https://github.com/gujingxiao/Lane-Segmentation-Solution-For-BaiduAI-Autonomous-Driving-Competition>的学习和注解。
+一个能够根据需要快速运行，调整的基线代码
 
 
 
 ## 更新记录
 
-| 日期       | 内容       |
-| ---------- | ---------- |
-| 2020/02/07 | - 新建项目 |
+| 日期       | 内容                      |
+| ---------- | ------------------------- |
+| 2020/03/02 | -  雄赳赳气昂昂地创建项目 |
+|            |                           |
+|            |                           |
 
