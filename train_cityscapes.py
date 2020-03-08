@@ -20,7 +20,7 @@ device = torch.device('cuda:4') if torch.cuda.is_available() else torch.device(
 # ----------report------------------
 def log(str):
     with open("report.log") as f:
-        print(str)
+        print(str, file=f)
 
 
 # ----------hyper param----------
@@ -108,8 +108,10 @@ for epoch in range(epoch):
     net.train()
     running_loss = 0.0
     count = 0
+    total = 0
     for images, labels in train_iter:
         count += 1
+        total += 1
         images = images.to(device)
         labels = labels.to(device)
         outputs = net(images)['out']
@@ -122,5 +124,6 @@ for epoch in range(epoch):
         optimizer.step()
         running_loss += loss.item()
         if count % 200 == 0:
-            log('%d, loss:%.3f' % (epoch + 1, running_loss / 200))
+            log('%d, loss:%.3f count:%d total:%d' %
+                (epoch + 1, running_loss / 200, count, total))
         running_loss = 0.0
