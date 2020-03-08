@@ -5,7 +5,7 @@ import torchvision
 import torchvision.transforms as transforms
 import PIL.Image as Image
 
-if sys.platform.startswith('win')
+if sys.platform.startswith('win'):
     import utils.img as img
 
 import numpy as np
@@ -13,7 +13,8 @@ from utils.label_tool import LabelUtil
 
 labTool = LabelUtil()
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
+    'cpu')
 
 use_dataParallel = true
 batch_size = 1
@@ -79,7 +80,7 @@ net = torchvision.models.segmentation.fcn_resnet50(pretrained=False,
 
 if use_dataParallel:
     net = nn.DataParallel(net)
-else: 
+else:
     net.to(device)
 
 criterion = nn.CrossEntropyLoss()
