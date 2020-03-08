@@ -13,7 +13,7 @@ from utils.label_tool import LabelUtil
 
 labTool = LabelUtil()
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
+device = torch.device('cuda:4') if torch.cuda.is_available() else torch.device(
     'cpu')
 
 
@@ -25,8 +25,8 @@ def log(str):
 
 # ----------hyper param----------
 use_dataParallel = False
-batch_size = 2
-num_workers = 0
+batch_size = 8
+num_workers = 4
 num_classes = 19
 epoch = 2
 #-------------------------------
@@ -89,8 +89,8 @@ net = torchvision.models.segmentation.fcn_resnet50(pretrained=False,
 
 if use_dataParallel:
     net = nn.DataParallel(net)
-else:
-    net.to(device)
+
+net.to(device)
 
 criterion = nn.CrossEntropyLoss(ignore_index=255)
 optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
@@ -122,5 +122,5 @@ for epoch in range(epoch):
         optimizer.step()
         running_loss += loss.item()
         if count % 200 == 0:
-            report('%d, loss:%.3f' % (epoch + 1, running_loss / 200))
+            log('%d, loss:%.3f' % (epoch + 1, running_loss / 200))
         running_loss = 0.0
