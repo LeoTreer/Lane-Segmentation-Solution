@@ -1,16 +1,23 @@
+import sys
 import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 import PIL.Image as Image
-import utils.img as img
+
+if sys.platform.startswith('win')
+    import utils.img as img
+
 import numpy as np
 from utils.label_tool import LabelUtil
 
 labTool = LabelUtil()
 
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+use_dataParallel = true
 batch_size = 1
-num_workers = 0
+num_workers = 4
 num_classes = 10
 epoch = 2
 
@@ -70,6 +77,11 @@ net = torchvision.models.segmentation.fcn_resnet50(pretrained=False,
                                                    num_classes=num_classes,
                                                    aux_loss=None)
 
+if use_dataParallel:
+    net = nn.DataParallel(net)
+else: 
+    net.to(device)
+
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
 
@@ -87,6 +99,8 @@ for epoch in range(epoch):
     count = 0
     for images, labels in train_iter:
         count += 1
+        images.to(device)
+        labels.to(device)
         outputs = net(images)['out']
         optimizer.zero_grad()
         loss = criterion(outputs, labels)
