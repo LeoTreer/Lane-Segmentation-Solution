@@ -5,8 +5,11 @@ import torchvision.transforms as transforms
 import PIL.Image as Image
 import utils.img as img
 import numpy as np
+from utils.label_tool import LabelUtil
 
-batch_size = 4
+labTool = LabelUtil()
+
+batch_size = 1
 num_workers = 0
 num_classes = 10
 epoch = 2
@@ -19,8 +22,10 @@ transform = transforms.Compose([
 
 target_transform = transforms.Compose([
     transforms.Resize((512, 1024), interpolation=Image.NEAREST),
+    torchvision.transforms.Lambda(labTool.id2TrainId),
     torchvision.transforms.Lambda(
-        lambda a: torch.from_numpy(np.array(a)).type(torch.LongTensor))
+        # lambda a: torch.from_numpy(np.array(a)).type(torch.LongTensor))
+        labTool.label2Tensor)
 ])
 
 train = torchvision.datasets.Cityscapes('./dataset/cityscapes',
@@ -82,7 +87,7 @@ for epoch in range(epoch):
     count = 0
     for images, labels in train_iter:
         count += 1
-        outputs = net(images)
+        outputs = net(images)['out']
         optimizer.zero_grad()
         loss = criterion(outputs, labels)
         loss.backward()
