@@ -6,6 +6,9 @@ import utils.img as img
 import models.twolayer as model
 import torch.optim as optim
 
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
+    'cpu')
+
 batch_size = 4
 num_workers = 0
 
@@ -57,7 +60,7 @@ print("trainset size is ", trainset.__len__())
 # print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 net = model.Net()
-
+net.to(device)
 # 创建optim
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
@@ -65,7 +68,7 @@ optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 for epoch in range(2):
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
-        inputs, labels = data
+        inputs, labels = data[0].to(device), data[1].to(device)
 
         optimizer.zero_grad()
 

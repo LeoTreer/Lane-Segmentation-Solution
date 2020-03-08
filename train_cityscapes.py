@@ -16,11 +16,13 @@ labTool = LabelUtil()
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
     'cpu')
 
-use_dataParallel = true
+# ----------hyper param----------
+use_dataParallel = True
 batch_size = 1
 num_workers = 4
 num_classes = 10
 epoch = 2
+#-------------------------------
 
 transform = transforms.Compose([
     transforms.Resize((512, 1024)),
@@ -100,8 +102,8 @@ for epoch in range(epoch):
     count = 0
     for images, labels in train_iter:
         count += 1
-        images.to(device)
-        labels.to(device)
+        images = images.to(device)
+        labels = labels.to(device)
         outputs = net(images)['out']
         optimizer.zero_grad()
         loss = criterion(outputs, labels)
