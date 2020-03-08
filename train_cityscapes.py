@@ -110,8 +110,7 @@ for epoch in range(epoch):
     count = 0
     total = 0
     for images, labels in train_iter:
-        count += 1
-        total += 1
+        count += batch_size
         images = images.to(device)
         labels = labels.to(device)
         outputs = net(images)['out']
@@ -124,6 +123,6 @@ for epoch in range(epoch):
         optimizer.step()
         running_loss += loss.item()
         if count % 200 == 0:
-            log('%d, loss:%.3f count:%d total:%d' %
-                (epoch + 1, running_loss / 200, count, total))
+            log('%d, loss:%.3f count:%d' %
+                (epoch + 1, running_loss / 200, count))
         running_loss = 0.0
