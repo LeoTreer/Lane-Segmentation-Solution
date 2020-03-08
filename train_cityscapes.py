@@ -16,22 +16,29 @@ labTool = LabelUtil()
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
     'cpu')
 
+
+# ----------report------------------
+def log(str):
+    with open("report.log") as f:
+        print(str)
+
+
 # ----------hyper param----------
-use_dataParallel = True
-batch_size = 1
-num_workers = 4
-num_classes = 10
+use_dataParallel = False
+batch_size = 2
+num_workers = 0
+num_classes = 19
 epoch = 2
 #-------------------------------
 
 transform = transforms.Compose([
-    transforms.Resize((512, 1024)),
+    transforms.Resize((256, 512)),
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
 target_transform = transforms.Compose([
-    transforms.Resize((512, 1024), interpolation=Image.NEAREST),
+    transforms.Resize((256, 512), interpolation=Image.NEAREST),
     torchvision.transforms.Lambda(labTool.id2TrainId),
     torchvision.transforms.Lambda(
         # lambda a: torch.from_numpy(np.array(a)).type(torch.LongTensor))
@@ -72,7 +79,7 @@ print('labels type is ', labels.type())
 # img.imgshow(torchvision.utils.make_grid(images))
 # img.imgshow(torchvision.utils.make_grid(labels[0]))
 
-print(labels[0].unique())
+print(labels.unique())
 # ----------------------------------------------
 
 net = torchvision.models.segmentation.fcn_resnet50(pretrained=False,
@@ -85,7 +92,7 @@ if use_dataParallel:
 else:
     net.to(device)
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(ignore_index=255)
 optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
 
 #--------------------------------------------------
@@ -98,6 +105,7 @@ optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
 #---------------------------------------------------
 
 for epoch in range(epoch):
+    net.train()
     running_loss = 0.0
     count = 0
     for images, labels in train_iter:
@@ -106,10 +114,13 @@ for epoch in range(epoch):
         labels = labels.to(device)
         outputs = net(images)['out']
         optimizer.zero_grad()
-        loss = criterion(outputs, labels)
+        print(labels.unique())
+        loss = criterion(
+            outputs.flatten(start_dim=2).squeeze(),
+            labels.flatten(start_dim=1).squeeze())
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
         if count % 200 == 0:
-            print('%d, loss:%.3f' % (epoch + 1, running_loss / 200))
+            report('%d, loss:%.3f' % (epoch + 1, running_loss / 200))
         running_loss = 0.0

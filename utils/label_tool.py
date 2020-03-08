@@ -29,7 +29,7 @@ class LabelUtil(data.Dataset):
     ]
     trainId2colours = dict(zip(range(19), colors))
     id2tra = dict(zip(valid_classes, range(19)))
-    ignored = 250
+    ignored = 255
 
     def __init__(self):
         super(LabelUtil, self).__init__()
@@ -46,7 +46,8 @@ class LabelUtil(data.Dataset):
     def id2TrainId(image, label):
         if (isinstance(label, Image.Image)):
             label = np.array(label)
-        label[label == LabelUtil.void_classes] = LabelUtil.ignored
+        for void in LabelUtil.void_classes:
+            label[label == void] = LabelUtil.ignored
         for trainId, id in enumerate(LabelUtil.id2tra):
             label[label == id] = trainId
         return label
