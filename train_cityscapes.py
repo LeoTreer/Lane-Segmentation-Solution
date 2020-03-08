@@ -19,7 +19,7 @@ device = torch.device('cuda:4') if torch.cuda.is_available() else torch.device(
 
 # ----------report------------------
 def log(str):
-    with open("report.log") as f:
+    with open("report.log", "w") as f:
         print(str, file=f)
 
 
