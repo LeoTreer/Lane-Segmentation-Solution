@@ -28,7 +28,7 @@ use_dataParallel = False
 batch_size = 8
 num_workers = 4
 num_classes = 19
-epoch = 2
+epoch = 100
 #-------------------------------
 
 transform = transforms.Compose([
@@ -104,25 +104,28 @@ optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
 # step
 #---------------------------------------------------
 
+total = 0
 for epoch in range(epoch):
     net.train()
     running_loss = 0.0
-    count = 0
-    period = batch_size * 4
-    for images, labels in train_iter:
-        count += batch_size
+    count = 0 
+    period =  4
+    for images, labels in trainloader:
+        count += 1 
+        total += batch_size
         images = images.to(device)
         labels = labels.to(device)
         outputs = net(images)['out']
         optimizer.zero_grad()
-        print(labels.unique())
         loss = criterion(
             outputs.flatten(start_dim=2).squeeze(),
             labels.flatten(start_dim=1).squeeze())
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
+        print(count)
         if count % period == 0:
-            log('%d, loss:%.3f count:%d' %
-                (epoch + 1, running_loss / period, count))
+            log('%d, loss:%.3f total:%d' %
+                (epoch + 1, running_loss /period , total))
         running_loss = 0.0
+    count = 0
