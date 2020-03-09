@@ -108,14 +108,15 @@ for epoch in range(epoch):
     net.train()
     running_loss = 0.0
     count = 0
+    total = 0
     period = batch_size * 4
-    for images, labels in train_iter:
+    for images, labels in trainloader:
         count += batch_size
+        total += batch_size
         images = images.to(device)
         labels = labels.to(device)
         outputs = net(images)['out']
         optimizer.zero_grad()
-        print(labels.unique())
         loss = criterion(
             outputs.flatten(start_dim=2).squeeze(),
             labels.flatten(start_dim=1).squeeze())
@@ -123,6 +124,7 @@ for epoch in range(epoch):
         optimizer.step()
         running_loss += loss.item()
         if count % period == 0:
-            log('%d, loss:%.3f count:%d' %
-                (epoch + 1, running_loss / period, count))
+            log('%d, loss:%.3f count:%d total:%d' %
+                (epoch + 1, running_loss / period, count, total))
+            count = 0
         running_loss = 0.0
