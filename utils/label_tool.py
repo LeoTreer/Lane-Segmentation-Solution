@@ -39,9 +39,10 @@ class LabelUtil(data.Dataset):
           toTensor with out normalization 
         """
         if (isinstance(label, np.ndarray)):
-            return torch.from_numpy(label).type(torch.LongTensor)
+            return image, torch.from_numpy(label).type(torch.LongTensor)
         if (isinstance(label, Image.Image)):
-            return torch.from_numpy(np.array(label)).type(torch.LongTensor)
+            return image, torch.from_numpy(np.array(label)).type(
+                torch.LongTensor)
 
     def id2TrainId(image, label):
         if (isinstance(label, Image.Image)):
@@ -50,4 +51,4 @@ class LabelUtil(data.Dataset):
             label[label == void] = LabelUtil.ignored
         for trainId, id in enumerate(LabelUtil.id2tra):
             label[label == id] = trainId
-        return label
+        return image, label
