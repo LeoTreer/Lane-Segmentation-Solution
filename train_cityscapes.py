@@ -7,11 +7,11 @@ import PIL.Image as Image
 import transforms as T
 import utils
 import time
-import datatime
+import datetime
 
 
 def get_dataset(name, set, transform):
-    assert set == "train" or set == "val"
+    assert set == "train" or set == "val" or set == "test"
     paths = {
         "cityscapes":
         ('./dataset/cityscapes', torchvision.datasets.Cityscapes, 19)
@@ -19,7 +19,7 @@ def get_dataset(name, set, transform):
     p, ds_fn, num_classes = paths[name]
     ds = ds_fn(p,
                split=set,
-               model="fine",
+               mode="fine",
                target_type="semantic",
                transforms=get_transform(train=True))
     return ds, num_classes
@@ -51,8 +51,8 @@ def get_transform(train):
     transforms.append(T.RandomResize(min_size, max_size))
     if train:
         pass  # 预留
-    transforms.append(T.ToTensor())
     transforms.append(T.IdtoTrainId())
+    transforms.append(T.ToTensor())
     transforms.append(T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]))
     return T.Compose(transforms)
 
@@ -89,10 +89,14 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
                              lr=optimizer.param_groups[0]["lr"])
 
 
-def main():
+def main(args):
 
     # set[device]
-    device = torch.device(aregs.device)
+    device = args.device
+    if args.device == "cuda":
+        device = torch.device(
+            'cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device(device)
 
     # set[detaset]
     train_set, num_classes = get_dataset("cityscapes", "train",
@@ -104,16 +108,16 @@ def main():
                                                num_workers=args.workers)
     test_loader = torch.utils.data.DataLoader(test_set,
                                               batch_size=args.batch_size,
-                                              num_workers=args.worker)
+                                              num_workers=args.workers)
 
     # set[model]
     model = torchvision.models.segmentation.__dict__[args.model](
-        pretrained=args.pretrainded,
+        pretrained=args.pretrained,
         num_classes=num_classes,
         progress=True,
-        aux_loss=args.axu_loss)
+        aux_loss=args.aux_loss)
 
-    model.to(deviec)
+    model.to(device)
     if args.resume:
         checkpoint = torch.load(args.resume, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
@@ -140,13 +144,17 @@ def main():
 
     optimizer = torch.optim.SGD(params_to_optimize,
                                 lr=args.lr,
-                                args.momentum,
+                                momentum=args.momentum,
                                 weight_decay=args.weight_decay)
 
     # x : epoch 当前第几个epoch
     # lr = initial_lr*function(epoch)
+    # lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
+    #     optimizer, lambda x: (1 - x / (len(data_loader) * args.epochs))**0.9)
+
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda x: (1 - x / (len(data_loader) * args.epochs))**0.9)
+        optimizer, lambda epoch: (1 - epoch /
+                                  (len(train_loader) * args.epochs))**0.9)
 
     start_time = time.time()
     for epoch in range(args.epochs):
@@ -185,20 +193,21 @@ def parse_args():
     # device 默认：None
     parser.add_argument('-d',
                         '--device',
+                        default="cuda",
                         help='witch device script to use',
                         type=str)
     # bach_size 默认：8
     parser.add_argument('-b',
-                        '--bach_size',
-                        default=8,
-                        help='bach_size',
+                        '--batch_size',
+                        default=1,
+                        help='batch_size',
                         type=int)
     # epochs 默认：30
     parser.add_argument('-e', '--epochs', default=30, help='epochs', type=int)
     # worker 默认：4
     parser.add_argument('-w',
-                        '--worker',
-                        default=4,
+                        '--workers',
+                        default=0,
                         type=int,
                         help='number of data loading workers')
     # lr 默认 le-2
@@ -224,15 +233,18 @@ def parse_args():
                         action='store_true',
                         help='auxiliar loss')
     # freq 默认：10
-    parser.add_argument('--freq', default=10, type=int, help='print frequency')
+    parser.add_argument('--print_freq',
+                        default=10,
+                        type=int,
+                        help='print frequency')
     # output_dir
     parser.add_argument('--output_dir', default='.', help='path where to save')
-    # resume
+    # resume 读档文件名
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     # test model
     parser.add_argument('--test_only', help='Only test the model')
-    # pretrainded
-    parser.add_argument('--pertrained',
+    # pretrained
+    parser.add_argument('--pretrained',
                         help='Use Pre-trained models from the modelzoo',
                         action='store_true')
     args = parser.parse_args()
@@ -241,4 +253,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    utils.checkDevice(args)
+    utils.printArgs(args)
     main(args)

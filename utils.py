@@ -4,6 +4,7 @@ import math
 import time
 import torch
 import torch.distributed as dist
+from prettytable import PrettyTable
 
 import errno
 import os
@@ -206,3 +207,20 @@ class MetricLogger(object):
 # torch.save
 def save(*args, **kwargs):
     torch.save(*args, **kwargs)
+
+
+def printArgs(args):
+    title = []
+    value = []
+    for key in args.__dict__:
+        title.append(key)
+        value.append(args.__dict__[key])
+    table = PrettyTable(title)
+    table.add_row(value)
+    print(table)
+
+
+def checkDevice(args):
+    if "cuda" in args.device:
+        args.device = args.device if torch.cuda.is_available(
+        ) else torch.device('cpu')
