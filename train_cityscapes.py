@@ -105,10 +105,12 @@ def main(args):
 
     train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_size=args.batch_size,
-                                               num_workers=args.workers)
+                                               num_workers=args.workers,
+                                               collate_fn=utils.collate_fn)
     test_loader = torch.utils.data.DataLoader(test_set,
                                               batch_size=args.batch_size,
-                                              num_workers=args.workers)
+                                              num_workers=args.workers,
+                                              collate_fn=utils.collate_fn)
 
     # set[model]
     model = torchvision.models.segmentation.__dict__[args.model](
@@ -199,7 +201,7 @@ def parse_args():
     # bach_size 默认：8
     parser.add_argument('-b',
                         '--batch_size',
-                        default=1,
+                        default=2,
                         help='batch_size',
                         type=int)
     # epochs 默认：30
