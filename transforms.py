@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+Image.LOAD_TRUNCATED_IMAGES = True
 import random
 import torch
 from torchvision import transforms as T

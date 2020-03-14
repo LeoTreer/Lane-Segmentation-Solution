@@ -37,7 +37,7 @@ def evaluate(model, loader, device, num_classes):
             output = output['out']
 
             confmat.update(target.flatten(), output.argmax(1).flatten)
-        confmat.reduce_from_all_processes()  # 分布式
+        # confmat.reduce_from_all_processes()  # 分布式
         return confmat
 
 
@@ -128,7 +128,7 @@ def main(args):
                            testloader,
                            device=device,
                            num_classes=num_classes)
-        print(confmat)
+        print(confmat.compute())
         return
 
     # 只传递需要梯度的参数
@@ -151,9 +151,6 @@ def main(args):
 
     # x : epoch 当前第几个epoch
     # lr = initial_lr*function(epoch)
-    # lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-    #     optimizer, lambda x: (1 - x / (len(data_loader) * args.epochs))**0.9)
-
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda epoch: (1 - epoch /
                                   (len(train_loader) * args.epochs))**0.9)
