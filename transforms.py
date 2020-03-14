@@ -48,8 +48,6 @@ class LabelUtil(data.Dataset):
                 torch.LongTensor)
 
     def id2TrainId(self, image, label):
-        if (isinstance(label, Image.Image)):
-            label = np.array(label)
         for void in LabelUtil.void_classes:
             label[label == void] = LabelUtil.ignored
         for trainId, id in enumerate(LabelUtil.id2tra):
@@ -70,8 +68,10 @@ class Compose(object):
 class ToTensor(object):
     def __call__(self, image, target):
         image = F.to_tensor(image)
-        target = torch.as_tensor(np.array(target),
+        target = torch.as_tensor(np.transpose(np.asarray(target),
+                                              (2, 0, 1))[0],
                                  dtype=torch.int64)  # torch.LongTensor
+        target = target.unsqueeze(0)
         return image, target
 
 

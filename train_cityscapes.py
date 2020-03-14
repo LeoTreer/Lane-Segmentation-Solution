@@ -27,7 +27,7 @@ def get_dataset(name, set, transform):
 
 def evaluate(model, loader, device, num_classes):
     model.eval()
-    confmat = utils.ConfusionMatrix(num_class)
+    confmat = utils.ConfusionMatrix(num_classes)
     metric_logger = utils.MetricLogger(delimiter=" ")
     header = "Test"
     with torch.no_grad():
@@ -36,7 +36,7 @@ def evaluate(model, loader, device, num_classes):
             output = model(image)
             output = output['out']
 
-            confmat.update(target.flatten(), output.argmax(1).flatten)
+            confmat.update(target.flatten(), output.argmax(1).flatten())
         # confmat.reduce_from_all_processes()  # 分布式
         return confmat
 
@@ -51,8 +51,8 @@ def get_transform(train):
     transforms.append(T.RandomResize(min_size, max_size))
     if train:
         pass  # 预留
-    transforms.append(T.IdtoTrainId())
     transforms.append(T.ToTensor())
+    transforms.append(T.IdtoTrainId())
     transforms.append(T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]))
     return T.Compose(transforms)
 
@@ -106,9 +106,10 @@ def main(args):
     train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_size=args.batch_size,
                                                num_workers=args.workers,
-                                               collate_fn=utils.collate_fn)
+                                               collate_fn=utils.collate_fn,
+                                               drop_last=True)
     test_loader = torch.utils.data.DataLoader(test_set,
-                                              batch_size=args.batch_size,
+                                              batch_size=1,
                                               num_workers=args.workers,
                                               collate_fn=utils.collate_fn)
 
@@ -125,7 +126,7 @@ def main(args):
         model.load_state_dict(checkpoint['model'])
     if args.test_only:
         confmat = evaluate(model,
-                           testloader,
+                           test_loader,
                            device=device,
                            num_classes=num_classes)
         print(confmat.compute())
@@ -198,7 +199,7 @@ def parse_args():
     # bach_size 默认：8
     parser.add_argument('-b',
                         '--batch_size',
-                        default=2,
+                        default=1,
                         help='batch_size',
                         type=int)
     # epochs 默认：30
@@ -241,12 +242,15 @@ def parse_args():
     # resume 读档文件名
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     # test model
-    parser.add_argument('--test_only', help='Only test the model')
+    parser.add_argument('--test_only',
+                        action='store_true',
+                        help='Only test the model')
     # pretrained
     parser.add_argument('--pretrained',
                         help='Use Pre-trained models from the modelzoo',
                         action='store_true')
     args = parser.parse_args()
+    args.test_only = True
     return args
 
 
