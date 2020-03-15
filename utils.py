@@ -4,6 +4,8 @@ import math
 import time
 import torch
 import torch.distributed as dist
+import pandas as pd
+import numpy as np
 from prettytable import PrettyTable
 
 import errno
@@ -241,3 +243,42 @@ def collate_fn(batch):
     batched_imgs = cat_list(images, fill_value=0)
     batched_targets = cat_list(targets, fill_value=255)
     return batched_imgs, batched_targets
+
+
+def mkdir(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+class CSVUtil(object):
+    def __init__(self, root, file_name, title):
+        self.root = root
+        self.file_name = file_name
+        self.title = title
+        self.path = os.path.join(root, "report", file_name)
+        mkdir(os.path.join(root, "report"))
+        self.createCSV(self.path, self.title)
+
+    def createCSV(self, path, title=None, **kwargs):
+        if title:
+            assert isinstance(title, tuple)
+            df_empty = pd.DataFrame(columns=title)
+            df_empty.to_csv(path, index=False)
+        else:
+            obj = {}
+            for key, value in kwargs.items():
+                obj[key] = value
+            df = pd.DataFrame(obj)
+            df.to_csv(path, index=False)
+
+    def append(self, obj):
+        df = pd.DataFrame(obj)
+        df.to_csv(self.path, mode="a", header=False)
+
+
+# if __name__ == "__main__":
+#     util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
+#     util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))

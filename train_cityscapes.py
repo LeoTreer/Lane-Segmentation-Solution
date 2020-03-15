@@ -14,7 +14,9 @@ def get_dataset(name, set, transform):
     assert set == "train" or set == "val" or set == "test"
     paths = {
         "cityscapes":
-        ('./dataset/cityscapes', torchvision.datasets.Cityscapes, 19)
+        ('./dataset/cityscapes', torchvision.datasets.Cityscapes, 19),
+        "small":
+        ('./smallerdata/cityscapes', torchvision.datasets.Cityscapes, 19)
     }
     p, ds_fn, num_classes = paths[name]
     ds = ds_fn(p,
@@ -89,7 +91,20 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
                              lr=optimizer.param_groups[0]["lr"])
 
 
+def get_CSV():
+    title = ("epoch", 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
+             'traffic_light', 'traffic_sign', 'vegetation', 'terrain', 'sky',
+             'person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle',
+             'bicycle')
+    acc_report = utils.CSVUtil(r"./", "acc.csv", title=title)
+    accg_report = utils.CSVUtil(r"./", "accg.csv", title=("epoch", "accg"))
+    iu_report = utils.CSVUtil(r"./", "iu.csv", title=("epoch", "iu"))
+    return acc_report, accg_report, iu_report
+
+
 def main(args):
+    # set[report]
+    acc_report, accg_report, iu_report = get_CSV()
 
     # set[device]
     device = args.device
@@ -99,9 +114,12 @@ def main(args):
     device = torch.device(device)
 
     # set[detaset]
-    train_set, num_classes = get_dataset("cityscapes", "train",
-                                         get_transform(True))
-    test_set, _ = get_dataset("cityscapes", "test", get_transform(False))
+    # train_set, num_classes = get_dataset("cityscapes", "train",
+    #                                      get_transform(True))
+    # test_set, _ = get_dataset("cityscapes", "test", get_transform(False))
+
+    train_set, num_classes = get_dataset("small", "train", get_transform(True))
+    test_set, _ = get_dataset("small", "test", get_transform(False))
 
     train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_size=args.batch_size,
@@ -164,7 +182,16 @@ def main(args):
                            test_loader,
                            device=device,
                            num_classes=num_classes)
-        print(confmat)
+        acc_globle, acc, iu = confmat.compute()
+
+        # 保存数据
+        accg_report.append(acc_globle.numpy())
+        acc_globle.append(acc.numpy())
+        iu_report.append(iu.numpy())
+
+        print("epoch-{} acc_globel:{}, acc:{}, iu:{}".format(
+            epoch, acc_globle, acc, iu))
+
         utils.save(
             {
                 'model': model.state_dict(),
@@ -250,7 +277,8 @@ def parse_args():
                         help='Use Pre-trained models from the modelzoo',
                         action='store_true')
     args = parser.parse_args()
-    args.test_only = True
+    # for test
+    # args.test_only = True
     return args
 
 

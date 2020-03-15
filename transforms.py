@@ -68,10 +68,14 @@ class Compose(object):
 class ToTensor(object):
     def __call__(self, image, target):
         image = F.to_tensor(image)
-        target = torch.as_tensor(np.transpose(np.asarray(target),
-                                              (2, 0, 1))[0],
+
+        target = torch.as_tensor(np.asarray(target),
                                  dtype=torch.int64)  # torch.LongTensor
-        target = target.unsqueeze(0)
+        if target.dim() == 3:
+            target = target.permute((2, 0, 1)).contiguous()
+        else:
+            target = target.unsqueeze(0)
+        target = target[0]
         return image, target
 
 
