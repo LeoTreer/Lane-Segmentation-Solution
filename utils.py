@@ -279,6 +279,6 @@ class CSVUtil(object):
         df.to_csv(self.path, mode="a", header=False)
 
 
-if __name__ == "__main__":
-    util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
-    util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))
+# if __name__ == "__main__":
+#     util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
+#     util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))

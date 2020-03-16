@@ -8,6 +8,7 @@ import transforms as T
 import utils
 import time
 import datetime
+import os
 
 
 def get_dataset(name, set, transform):
@@ -83,7 +84,7 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
         loss = criterion(output, target)
 
         optimizer.zero_grad()
-        loss.backward
+        loss.backward()
         optimizer.step()
 
         lr_scheduler.step()
@@ -157,9 +158,9 @@ def main(args):
         acc_globle, acc, iu = confmat.compute()
 
         # 保存数据
-        accg_report.append(acc_globle.numpy()[None, ])
-        acc_report.append(acc.numpy()[None, ])
-        iu_report.append(iu.numpy()[None, ])
+        accg_report.append(acc_globle.cpu().numpy()[None, ])
+        acc_report.append(acc.cpu().numpy()[None, ])
+        iu_report.append(iu.cpu().numpy()[None, ])
 
         print("[Test] acc_globel:{}, acc:{}, iu:{}".format(
             acc_globle, acc, iu))
@@ -205,12 +206,15 @@ def main(args):
         acc_globle, acc, iu = confmat.compute()
 
         # 保存数据
-        accg_report.append(acc_globle.numpy()[None, ])
-        acc_report.append(acc.numpy()[None, ])
-        iu_report.append(iu.numpy()[None, ])
+        accg_report.append(acc_globle.cpu().numpy()[None, ])
+        acc_report.append(acc.cpu().numpy()[None, ])
+        iu_report.append(iu.cpu().numpy()[None, ])
 
         print("epoch-{} acc_globel:{}, acc:{}, iu:{}".format(
-            epoch, acc_globle, acc, iu))
+            epoch,
+            acc_globle.cpu().numpy(),
+            acc.cpu().numpy(),
+            iu.cpu().numpy()))
 
         utils.save(
             {
@@ -219,8 +223,10 @@ def main(args):
                 'epoch': epoch,
                 'args': args
             },
-            os.path.join(args.output_dir,
-                         'model_{epoch}.pth'.format(epoch=epoch)))
+            os.path.join(
+                args.output_dir,
+                'model{model}_{epoch}.pth'.format(model=args.model,
+                                                  epoch=epoch)))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -246,7 +252,7 @@ def parse_args():
     # bach_size 默认：8
     parser.add_argument('-b',
                         '--batch_size',
-                        default=1,
+                        default=4,
                         help='batch_size',
                         type=int)
     # epochs 默认：30
@@ -254,7 +260,7 @@ def parse_args():
     # worker 默认：4
     parser.add_argument('-w',
                         '--workers',
-                        default=0,
+                        default=4,
                         type=int,
                         help='number of data loading workers')
     # lr 默认 le-2
@@ -285,7 +291,9 @@ def parse_args():
                         type=int,
                         help='print frequency')
     # output_dir
-    parser.add_argument('--output_dir', default='.', help='path where to save')
+    parser.add_argument('--output_dir',
+                        default='./checkpoint',
+                        help='path where to save')
     # resume 读档文件名
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     # test model
@@ -297,8 +305,6 @@ def parse_args():
                         help='Use Pre-trained models from the modelzoo',
                         action='store_true')
     args = parser.parse_args()
-    # for test
-    args.test_only = True
     return args
 
 
