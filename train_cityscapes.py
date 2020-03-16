@@ -91,20 +91,24 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
                              lr=optimizer.param_groups[0]["lr"])
 
 
-def get_CSV():
+def get_CSV(model="train"):
     title = ("epoch", 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
              'traffic_light', 'traffic_sign', 'vegetation', 'terrain', 'sky',
              'person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle',
              'bicycle')
-    acc_report = utils.CSVUtil(r"./", "acc.csv", title=title)
-    accg_report = utils.CSVUtil(r"./", "accg.csv", title=("epoch", "accg"))
-    iu_report = utils.CSVUtil(r"./", "iu.csv", title=("epoch", "iu"))
+    acc_report = utils.CSVUtil(r"./", "acc.csv", title=title, model=model)
+    accg_report = utils.CSVUtil(r"./",
+                                "accg.csv",
+                                title=("epoch", "accg"),
+                                model=model)
+    iu_report = utils.CSVUtil(r"./",
+                              "iu.csv",
+                              title=("epoch", "iu"),
+                              model=model)
     return acc_report, accg_report, iu_report
 
 
 def main(args):
-    # set[report]
-    acc_report, accg_report, iu_report = get_CSV()
 
     # set[device]
     device = args.device
@@ -143,11 +147,23 @@ def main(args):
         checkpoint = torch.load(args.resume, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
     if args.test_only:
+        # set[report]
+        acc_report, accg_report, iu_report = get_CSV(model="val")
         confmat = evaluate(model,
                            test_loader,
                            device=device,
                            num_classes=num_classes)
-        print(confmat.compute())
+
+        acc_globle, acc, iu = confmat.compute()
+
+        # 保存数据
+        accg_report.append(acc_globle.numpy()[None, ])
+        acc_report.append(acc.numpy()[None, ])
+        iu_report.append(iu.numpy()[None, ])
+
+        print("[Test] acc_globel:{}, acc:{}, iu:{}".format(
+            acc_globle, acc, iu))
+
         return
 
     # 只传递需要梯度的参数
@@ -175,6 +191,10 @@ def main(args):
                                   (len(train_loader) * args.epochs))**0.9)
 
     start_time = time.time()
+
+    # set[report]
+    acc_report, accg_report, iu_report = get_CSV()
+
     for epoch in range(args.epochs):
         train_one_epoch(model, criterion, optimizer, train_loader,
                         lr_scheduler, device, epoch, args.print_freq)
@@ -185,9 +205,9 @@ def main(args):
         acc_globle, acc, iu = confmat.compute()
 
         # 保存数据
-        accg_report.append(acc_globle.numpy())
-        acc_globle.append(acc.numpy())
-        iu_report.append(iu.numpy())
+        accg_report.append(acc_globle.numpy()[None, ])
+        acc_report.append(acc.numpy()[None, ])
+        iu_report.append(iu.numpy()[None, ])
 
         print("epoch-{} acc_globel:{}, acc:{}, iu:{}".format(
             epoch, acc_globle, acc, iu))
@@ -278,7 +298,7 @@ def parse_args():
                         action='store_true')
     args = parser.parse_args()
     # for test
-    # args.test_only = True
+    args.test_only = True
     return args
 
 

@@ -254,12 +254,12 @@ def mkdir(path):
 
 
 class CSVUtil(object):
-    def __init__(self, root, file_name, title):
+    def __init__(self, root, file_name, title, model="train"):
         self.root = root
         self.file_name = file_name
         self.title = title
-        self.path = os.path.join(root, "report", file_name)
-        mkdir(os.path.join(root, "report"))
+        self.path = os.path.join(root, "report", model, file_name)
+        mkdir(os.path.join(root, "report", model))
         self.createCSV(self.path, self.title)
 
     def createCSV(self, path, title=None, **kwargs):
@@ -279,6 +279,6 @@ class CSVUtil(object):
         df.to_csv(self.path, mode="a", header=False)
 
 
-# if __name__ == "__main__":
-#     util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
-#     util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))
+if __name__ == "__main__":
+    util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
+    util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))
