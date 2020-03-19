@@ -7,3 +7,4 @@ dataset/
 *.swn
 *.swo
 smallerdata/
+checkpoint/

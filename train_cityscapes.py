@@ -102,10 +102,7 @@ def get_CSV(model="train"):
                                 "accg.csv",
                                 title=("epoch", "accg"),
                                 model=model)
-    iu_report = utils.CSVUtil(r"./",
-                              "iu.csv",
-                              title=("epoch", "iu"),
-                              model=model)
+    iu_report = utils.CSVUtil(r"./", "iu.csv", title=title, model=model)
     return acc_report, accg_report, iu_report
 
 
@@ -119,12 +116,14 @@ def main(args):
     device = torch.device(device)
 
     # set[detaset]
-    # train_set, num_classes = get_dataset("cityscapes", "train",
-    #                                      get_transform(True))
-    # test_set, _ = get_dataset("cityscapes", "test", get_transform(False))
-
-    train_set, num_classes = get_dataset("small", "train", get_transform(True))
-    test_set, _ = get_dataset("small", "test", get_transform(False))
+    if args.smalldata:
+        train_set, num_classes = get_dataset("small", "train",
+                                             get_transform(True))
+        test_set, _ = get_dataset("small", "test", get_transform(False))
+    else:
+        train_set, num_classes = get_dataset("cityscapes", "train",
+                                             get_transform(True))
+        test_set, _ = get_dataset("cityscapes", "test", get_transform(False))
 
     train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_size=args.batch_size,
@@ -162,8 +161,7 @@ def main(args):
         acc_report.append(acc.cpu().numpy()[None, ])
         iu_report.append(iu.cpu().numpy()[None, ])
 
-        print("[Test] acc_globel:{}, acc:{}, iu:{}".format(
-            acc_globle, acc, iu))
+        print(confmat)
 
         return
 
@@ -210,11 +208,7 @@ def main(args):
         acc_report.append(acc.cpu().numpy()[None, ])
         iu_report.append(iu.cpu().numpy()[None, ])
 
-        print("epoch-{} acc_globel:{}, acc:{}, iu:{}".format(
-            epoch,
-            acc_globle.cpu().numpy(),
-            acc.cpu().numpy(),
-            iu.cpu().numpy()))
+        print(confmat)
 
         utils.save(
             {
@@ -303,6 +297,9 @@ def parse_args():
     # pretrained
     parser.add_argument('--pretrained',
                         help='Use Pre-trained models from the modelzoo',
+                        action='store_true')
+    parser.add_argument('--smalldata',
+                        help='Use smalldata',
                         action='store_true')
     args = parser.parse_args()
     return args
