@@ -13,24 +13,28 @@ import os
 
 def get_dataset(name, set, transform):
     assert set == "train" or set == "val" or set == "test"
+    city_classes = ('road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
+                    'traffic_light', 'traffic_sign', 'vegetation', 'terrain',
+                    'sky', 'person', 'rider', 'car', 'truck', 'bus', 'train',
+                    'motorcycle', 'bicycle')
     paths = {
-        "cityscapes":
-        ('./dataset/cityscapes', torchvision.datasets.Cityscapes, 19),
-        "small":
-        ('./smallerdata/cityscapes', torchvision.datasets.Cityscapes, 19)
+        "cityscapes": ('./dataset/cityscapes', torchvision.datasets.Cityscapes,
+                       19, city_classes),
+        "small": ('./smallerdata/cityscapes', torchvision.datasets.Cityscapes,
+                  19, city_classes)
     }
-    p, ds_fn, num_classes = paths[name]
+    p, ds_fn, num_classes, classes_name = paths[name]
     ds = ds_fn(p,
                split=set,
                mode="fine",
                target_type="semantic",
                transforms=get_transform(train=True))
-    return ds, num_classes
+    return ds, num_classes, classes_name
 
 
-def evaluate(model, loader, device, num_classes):
+def evaluate(model, loader, device, num_classes, classes_name=None):
     model.eval()
-    confmat = utils.ConfusionMatrix(num_classes)
+    confmat = utils.ConfusionMatrix(num_classes, classes_name)
     metric_logger = utils.MetricLogger(delimiter=" ")
     header = "Test"
     with torch.no_grad():
@@ -38,7 +42,6 @@ def evaluate(model, loader, device, num_classes):
             image, target = image.to(device), target.to(device)
             output = model(image)
             output = output['out']
-
             confmat.update(target.flatten(), output.argmax(1).flatten())
         # confmat.reduce_from_all_processes()  # 分布式
         return confmat
@@ -117,13 +120,14 @@ def main(args):
 
     # set[detaset]
     if args.smalldata:
-        train_set, num_classes = get_dataset("small", "train",
-                                             get_transform(True))
-        test_set, _ = get_dataset("small", "test", get_transform(False))
+        train_set, num_classes, classes_name = get_dataset(
+            "small", "train", get_transform(True))
+        test_set, _, _ = get_dataset("small", "test", get_transform(False))
     else:
-        train_set, num_classes = get_dataset("cityscapes", "train",
-                                             get_transform(True))
-        test_set, _ = get_dataset("cityscapes", "test", get_transform(False))
+        train_set, num_classes, classes_name = get_dataset(
+            "cityscapes", "train", get_transform(True))
+        test_set, _, _ = get_dataset("cityscapes", "test",
+                                     get_transform(False))
 
     train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_size=args.batch_size,

@@ -75,9 +75,10 @@ class SmoothedValue(object):
 
 
 class ConfusionMatrix(object):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, classes_name=None):
         self.num_classes = num_classes
         self.mat = None
+        self.classes_name = classes_name
 
     # 原理基本上和numpy版本一样
     def update(self, a, b):
@@ -111,14 +112,27 @@ class ConfusionMatrix(object):
 
     def __str__(self):
         acc_global, acc, iu = self.compute()
-        return ('global correct: {:.1f}\n'
-                'average row correct: {}\n'
-                'IoU: {}\n'
-                'mean IoU: {:.1f}').format(
-                    acc_global.item() * 100,
-                    ['{:.1f}'.format(i) for i in (acc * 100).tolist()],
-                    ['{:.1f}'.format(i) for i in (iu * 100).tolist()],
-                    iu.mean().item() * 100)
+        if self.classes_name is not None:
+            return ('global correct: {:.1f}\n'
+                    'average row correct: {}\n'
+                    'IoU: {}\n'
+                    'mean IoU: {:.1f}').format(acc_global.item() * 100, [
+                        '{}:{:.1f}'.format(self.classes_name[i], i)
+                        for i in (acc * 100).tolist()
+                    ], [
+                        '{}:{:.1f}'.format(self.classes_name[i], i)
+                        for i in (iu * 100).tolist()
+                    ],
+                                               iu.mean().item() * 100)
+        else:
+            return ('global correct: {:.1f}\n'
+                    'average row correct: {}\n'
+                    'IoU: {}\n'
+                    'mean IoU: {:.1f}').format(
+                        acc_global.item() * 100,
+                        ['{:.1f}'.format(i) for i in (acc * 100).tolist()],
+                        ['{:.1f}'.format(i) for i in (iu * 100).tolist()],
+                        iu.mean().item() * 100)
 
 
 class MetricLogger(object):
