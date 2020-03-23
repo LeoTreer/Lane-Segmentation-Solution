@@ -293,6 +293,27 @@ class CSVUtil(object):
         df.to_csv(self.path, mode="a", header=False)
 
 
+def one_hot_encode(target, classes_num):
+    """one_hot encode
+    Args:
+        labels: A tensor of shape (N,H,W)
+        classes_num: num of classes
+    Return:
+        output: A tensor of shape (N, classes_num , H, W)
+    """
+    assert len(target.shape) == 3
+    n, h, w = target.shape
+    return torch.zeros(n, classes_num, h, w).scatter_(1, target.unsqueeze(1),
+                                                      1)
+
+
 # if __name__ == "__main__":
-#     util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
-#     util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))
+# CSV 测试
+# util = CSVUtil(r"./", "test.csv", title=("epoch", "acc", "accg", "iu"))
+# util.append(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]))
+
+# one_hot
+# target = torch.tensor(
+#     np.random.randint(0, 8, 100, dtype=np.int64).reshape(1, 10, 10))
+# one_hot = one_hot_encode(target, 8)
+# print(one_hot.shape)

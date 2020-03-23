@@ -9,6 +9,7 @@ import utils
 import time
 import datetime
 import os
+import losses as l
 
 
 def get_dataset(name, set, transform):
@@ -19,9 +20,9 @@ def get_dataset(name, set, transform):
                     'motorcycle', 'bicycle')
     paths = {
         "cityscapes": ('./dataset/cityscapes', torchvision.datasets.Cityscapes,
-                       19, city_classes),
-        "small": ('./smallerdata/cityscapes', torchvision.datasets.Cityscapes,
-                  19, city_classes)
+                       20, city_classes),
+        "small": ('./dataset/smallerdata/cityscapes',
+                  torchvision.datasets.Cityscapes, 20, city_classes)
     }
     p, ds_fn, num_classes, classes_name = paths[name]
     ds = ds_fn(p,
@@ -63,15 +64,40 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
-def criterion(inputs, target):
+def criterion_ce(inputs, target, classes_num=None, focal=False, dice=False):
     losses = {}
     for name, x in inputs.items():
-        losses[name] = nn.functional.cross_entropy(x, target, ignore_index=255)
+        losses[name] = nn.functional.cross_entropy(x, target)
 
     if len(losses) == 1:
         return losses['out']
 
     return losses['out'] + 0.5 * losses['aux']
+
+
+def criterion_focal(inputs, target):
+    losses = {}
+    alpha = [75 / 19] * 20
+    alpha[0] = 25
+    losses['out'] = nn.functional.cross_entropy(inputs['out'], target)
+    losses['focal'] = l.focal_loss(inputs['out'], target)
+    return losses['out'] * 0.5 + losses["focal"]
+
+
+def criterion_dice(inputs, target):
+    losses = {}
+    losses['out'] = nn.functional.cross_entropy(inputs['out'], target)
+    losses['dice'] = l.dice_loss(inputs['out'], target)
+    return losses['out'] * 0.5 + losses["dice"]
+
+
+def get_criterion(name):
+    if name == "focal":
+        return criterion_focal
+    elif name == "dice":
+        return criterion_dice
+    else:
+        return criterion_ce
 
 
 def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
@@ -110,6 +136,9 @@ def get_CSV(model="train"):
 
 
 def main(args):
+
+    # criterion
+    criterion = get_criterion(args.criterion)
 
     # set[device]
     device = args.device
@@ -302,9 +331,16 @@ def parse_args():
     parser.add_argument('--pretrained',
                         help='Use Pre-trained models from the modelzoo',
                         action='store_true')
+
     parser.add_argument('--smalldata',
                         help='Use smalldata',
                         action='store_true')
+
+    parser.add_argument('-c',
+                        "--criterion",
+                        default='ce',
+                        choices=("ce", "focal", "dice"),
+                        help='criterion')
     args = parser.parse_args()
     return args
 
