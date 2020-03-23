@@ -272,7 +272,7 @@ class CSVUtil(object):
         self.root = root
         self.file_name = file_name + '_' + identify + '.csv'
         self.title = title
-        self.path = os.path.join(root, "report", model, file_name)
+        self.path = os.path.join(root, "report", model, self.file_name)
         dirpath = os.path.join(root, "report", model)
         if not os.path.exists(dirpath):
             mkdir(dirpath)

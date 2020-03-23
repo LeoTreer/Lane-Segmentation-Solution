@@ -102,7 +102,7 @@ def get_criterion(name):
 
 def get_identify():
     import hashlib
-    tmp = time.strftime("%y%m%d")
+    tmp = time.strftime("%y%m%d%%H%M%S")
     hash = hashlib.md5()
     hash.update(tmp.encode(encoding='utf-8'))
     hash = hash.hexdigest()
