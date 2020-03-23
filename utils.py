@@ -268,12 +268,14 @@ def mkdir(path):
 
 
 class CSVUtil(object):
-    def __init__(self, root, file_name, title, model="train"):
+    def __init__(self, root, file_name, title, identify, model="train"):
         self.root = root
-        self.file_name = file_name
+        self.file_name = file_name + '_' + identify + '.csv'
         self.title = title
         self.path = os.path.join(root, "report", model, file_name)
-        mkdir(os.path.join(root, "report", model))
+        dirpath = os.path.join(root, "report", model)
+        if not os.path.exists(dirpath):
+            mkdir(dirpath)
         self.createCSV(self.path, self.title)
 
     def createCSV(self, path, title=None, **kwargs):
@@ -303,8 +305,8 @@ def one_hot_encode(target, classes_num):
     """
     assert len(target.shape) == 3
     n, h, w = target.shape
-    return torch.zeros(n, classes_num, h, w).scatter_(1, target.unsqueeze(1),
-                                                      1)
+    return torch.zeros(n, classes_num, h,
+                       w).to(target.device).scatter_(1, target.unsqueeze(1), 1)
 
 
 # if __name__ == "__main__":

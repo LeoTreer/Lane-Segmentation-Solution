@@ -100,6 +100,15 @@ def get_criterion(name):
         return criterion_ce
 
 
+def get_identify():
+    import hashlib
+    tmp = time.strftime("%y%m%d")
+    hash = hashlib.md5()
+    hash.update(tmp.encode(encoding='utf-8'))
+    hash = hash.hexdigest()
+    return tmp + hash[:5]
+
+
 def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
                     device, epoch, print_freq):
     model.train()
@@ -121,21 +130,31 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
                              lr=optimizer.param_groups[0]["lr"])
 
 
-def get_CSV(model="train"):
+def get_CSV(identify, model="train"):
     title = ("epoch", 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
              'traffic_light', 'traffic_sign', 'vegetation', 'terrain', 'sky',
              'person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle',
              'bicycle')
-    acc_report = utils.CSVUtil(r"./", "acc.csv", title=title, model=model)
+    acc_report = utils.CSVUtil(r"./",
+                               "acc",
+                               title=title,
+                               identify=identify,
+                               model=model)
     accg_report = utils.CSVUtil(r"./",
-                                "accg.csv",
+                                "accg",
                                 title=("epoch", "accg"),
+                                identify=identify,
                                 model=model)
-    iu_report = utils.CSVUtil(r"./", "iu.csv", title=title, model=model)
+    iu_report = utils.CSVUtil(r"./",
+                              "iu",
+                              title=title,
+                              identify=identify,
+                              model=model)
     return acc_report, accg_report, iu_report
 
 
 def main(args):
+    identify = get_identify()
 
     # criterion
     criterion = get_criterion(args.criterion)
@@ -181,7 +200,7 @@ def main(args):
         model.load_state_dict(checkpoint['model'])
     if args.test_only:
         # set[report]
-        acc_report, accg_report, iu_report = get_CSV(model="val")
+        acc_report, accg_report, iu_report = get_CSV(identify, model="val")
         confmat = evaluate(model,
                            test_loader,
                            device=device,
@@ -225,7 +244,7 @@ def main(args):
     start_time = time.time()
 
     # set[report]
-    acc_report, accg_report, iu_report = get_CSV()
+    acc_report, accg_report, iu_report = get_CSV(identify=identify)
 
     for epoch in range(args.epochs):
         train_one_epoch(model, criterion, optimizer, train_loader,
@@ -251,9 +270,8 @@ def main(args):
                 'args': args
             },
             os.path.join(
-                args.output_dir,
-                'model{model}_{epoch}.pth'.format(model=args.model,
-                                                  epoch=epoch)))
+                args.output_dir, 'model{model}_{epoch}_{identify}.pth'.format(
+                    model=args.model, epoch=epoch, identify=identify)))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

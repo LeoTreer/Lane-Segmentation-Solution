@@ -28,7 +28,7 @@ def dice_loss(predict, target, epsilon=0.00001, weight=None):
         assert len(weight) == classes_num
         weight = torch.FloatTensor(weight).view(1, -1)
         weight = weight / weight.sum()
-
+    weight.to(target.device)
     target = utils.one_hot_encode(target, classes_num)
     predict = F.softmax(predict, 1)
     inse = (torch.sum(predict * target, (2, 3)) * weight).sum(1)
@@ -58,7 +58,7 @@ def focal_loss(predict, target, epsilon=0.00001, alpha=None, gamma=2):
         assert len(alpha) == classes_num
         alpha = torch.FloatTensor(alpha).view(1, -1, 1, 1)
         alpha = alpha / alpha.sum()
-
+    alpha.to(target.device)
     target = utils.one_hot_encode(target, classes_num)
     predict = F.softmax(predict, 1)
 
