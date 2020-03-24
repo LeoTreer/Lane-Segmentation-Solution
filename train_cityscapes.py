@@ -64,10 +64,10 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
-def criterion_ce(inputs, target, classes_num=None, focal=False, dice=False):
+def criterion_ce(inputs, target):
     losses = {}
     for name, x in inputs.items():
-        losses[name] = nn.functional.cross_entropy(x, target)
+        losses[name] = nn.functional.cross_entropy(x, target, ignore_index=255)
 
     if len(losses) == 1:
         return losses['out']
