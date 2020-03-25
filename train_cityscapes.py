@@ -52,8 +52,8 @@ def get_transform(train):
     base_size = 1024  # 等比缩放，只需要设置最短边
     # crop_size = 480
 
-    min_size = int((0.25 if train else 1.0) * base_size)
-    max_size = int((0.5 if train else 1.0) * base_size)
+    min_size = int((0.5 if train else 1.0) * base_size)
+    max_size = int((1 if train else 1.0) * base_size)
     transforms = []
     transforms.append(T.RandomResize(min_size, max_size))
     if train:
@@ -118,7 +118,8 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
     metric_logger.add_meter('lr',
                             utils.SmoothedValue(window_size=1, fmt='{value}'))
     header = 'Epoch:[{}]'.format(epoch)
-    for image, target in metric_logger.log_every(data_loader, print_freq):
+    for image, target in metric_logger.log_every(data_loader, print_freq,
+                                                 header):
         image, target = image.to(device), target.to(device)
         output = model(image)
         loss = criterion(output, target)
@@ -272,8 +273,10 @@ def main(args):
                 'args': args
             },
             os.path.join(
-                args.output_dir, 'model{model}_{epoch}_{identify}.pth'.format(
-                    model=args.model, epoch=epoch, identify=identify)))
+                args.output_dir,
+                '{model}_{epoch}_{identify}.pth'.format(model=args.model,
+                                                        epoch=epoch,
+                                                        identify=identify)))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
