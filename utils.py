@@ -255,7 +255,7 @@ def cat_list(images, fill_value=0):
 def collate_fn(batch):
     images, targets = list(zip(*batch))
     batched_imgs = cat_list(images, fill_value=0)
-    batched_targets = cat_list(targets, fill_value=0)
+    batched_targets = cat_list(targets, fill_value=255)
     return batched_imgs, batched_targets
 
 
@@ -295,7 +295,7 @@ class CSVUtil(object):
         df.to_csv(self.path, mode="a", header=False)
 
 
-def one_hot_encode(target, classes_num):
+def one_hot_encode(target, classes_num, ignore_index=None):
     """one_hot encode
     Args:
         labels: A tensor of shape (N,H,W)

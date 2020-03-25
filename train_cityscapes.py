@@ -20,9 +20,9 @@ def get_dataset(name, set, transform):
                     'motorcycle', 'bicycle')
     paths = {
         "cityscapes": ('./dataset/cityscapes', torchvision.datasets.Cityscapes,
-                       20, city_classes),
+                       19, city_classes),
         "small": ('./dataset/smallerdata/cityscapes',
-                  torchvision.datasets.Cityscapes, 20, city_classes)
+                  torchvision.datasets.Cityscapes, 19, city_classes)
     }
     p, ds_fn, num_classes, classes_name = paths[name]
     ds = ds_fn(p,
@@ -79,15 +79,19 @@ def criterion_focal(inputs, target):
     losses = {}
     alpha = [75 / 19] * 20
     alpha[0] = 25
-    losses['out'] = nn.functional.cross_entropy(inputs['out'], target)
-    losses['focal'] = l.focal_loss(inputs['out'], target)
+    losses['out'] = nn.functional.cross_entropy(inputs['out'],
+                                                target,
+                                                ignore_index=255)
+    losses['focal'] = l.focal_loss(inputs['out'], target, ignore_index=255)
     return losses['out'] * 0.5 + losses["focal"]
 
 
 def criterion_dice(inputs, target):
     losses = {}
-    losses['out'] = nn.functional.cross_entropy(inputs['out'], target)
-    losses['dice'] = l.dice_loss(inputs['out'], target)
+    losses['out'] = nn.functional.cross_entropy(inputs['out'],
+                                                target,
+                                                ignore_index=255)
+    losses['dice'] = l.dice_loss(inputs['out'], target, ignore_index=255)
     return losses['out'] * 0.5 + losses["dice"]
 
 
