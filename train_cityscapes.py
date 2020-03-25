@@ -77,8 +77,6 @@ def criterion_ce(inputs, target):
 
 def criterion_focal(inputs, target):
     losses = {}
-    alpha = [75 / 19] * 20
-    alpha[0] = 25
     losses['out'] = nn.functional.cross_entropy(inputs['out'],
                                                 target,
                                                 ignore_index=255)
