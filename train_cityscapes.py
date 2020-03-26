@@ -201,6 +201,7 @@ def main(args):
     if args.resume:
         checkpoint = torch.load(args.resume, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
+
     if args.test_only:
         # set[report]
         acc_report, accg_report, iu_report = get_CSV(identify, model="val")
@@ -243,6 +244,9 @@ def main(args):
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda epoch: (1 - epoch /
                                   (len(train_loader) * args.epochs))**0.9)
+
+    if args.resume:
+        optimizer.load_state_dict(checkpoint['optimizer'])
 
     start_time = time.time()
 
@@ -345,7 +349,9 @@ def parse_args():
                         default='./checkpoint',
                         help='path where to save')
     # resume 读档文件名
-    parser.add_argument('--resume', default='', help='resume from checkpoint')
+    parser.add_argument('--resume',
+                        default='',
+                        help='resume model from checkpoint')
     # test model
     parser.add_argument('--test_only',
                         action='store_true',
