@@ -268,9 +268,9 @@ def mkdir(path):
 
 
 class CSVUtil(object):
-    def __init__(self, root, file_name, title, identify, model="train"):
+    def __init__(self, root, file_name, title, model="train"):
         self.root = root
-        self.file_name = file_name + '_' + identify + '.csv'
+        self.file_name = file_name
         self.title = title
         self.path = os.path.join(root, "report", model, self.file_name)
         dirpath = os.path.join(root, "report", model)

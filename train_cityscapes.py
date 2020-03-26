@@ -52,8 +52,8 @@ def get_transform(train):
     base_size = 1024  # 等比缩放，只需要设置最短边
     # crop_size = 480
 
-    min_size = int((0.5 if train else 1.0) * base_size)
-    max_size = int((1 if train else 1.0) * base_size)
+    min_size = int((0.25 if train else 1.0) * base_size)
+    max_size = int((0.5 if train else 1.0) * base_size)
     transforms = []
     transforms.append(T.RandomResize(min_size, max_size))
     if train:
@@ -102,13 +102,17 @@ def get_criterion(name):
         return criterion_ce
 
 
-def get_identify():
+def get_identify(taskId=None):
+    assert len(taskId) == 5, "taskId长度只能为5"
     import hashlib
     tmp = time.strftime("%y%m%d%H%M%S")
     hash = hashlib.md5()
     hash.update(tmp.encode(encoding='utf-8'))
     hash = hash.hexdigest()
-    return tmp + hash[:5]
+    if taskId:
+        return taskId, hash[:5]
+    else:
+        return hash[-5:], hash[:5]
 
 
 def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
@@ -133,31 +137,29 @@ def train_one_epoch(model, criterion, optimizer, data_loader, lr_scheduler,
                              lr=optimizer.param_groups[0]["lr"])
 
 
-def get_CSV(identify, model="train"):
+def get_CSV(taskId, identify, model="train"):
     title = ("epoch", 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
              'traffic_light', 'traffic_sign', 'vegetation', 'terrain', 'sky',
              'person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle',
              'bicycle')
+    s = "{taskId}_{identify}_{fileName}.csv"
     acc_report = utils.CSVUtil(r"./",
-                               "acc",
-                               title=title,
-                               identify=identify,
+                               s.format(taskId=taskId, identify=identify, fileName= "acc"),
+                               title=title,,
                                model=model)
     accg_report = utils.CSVUtil(r"./",
-                                "accg",
-                                title=("epoch", "accg"),
-                                identify=identify,
+                                s.format(taskId=taskId, identify=identify, fileName= "accg"),
+                                title=("epoch", "accg"),,
                                 model=model)
     iu_report = utils.CSVUtil(r"./",
-                              "iu",
-                              title=title,
-                              identify=identify,
+                              s.format(taskId=taskId, identify=identify, fileName= "iu"),
+                              title=title,,
                               model=model)
     return acc_report, accg_report, iu_report
 
 
 def main(args):
-    identify = get_identify()
+    taskId, identify = get_identify()
 
     # criterion
     criterion = get_criterion(args.criterion)
@@ -204,7 +206,9 @@ def main(args):
 
     if args.test_only:
         # set[report]
-        acc_report, accg_report, iu_report = get_CSV(identify, model="val")
+        acc_report, accg_report, iu_report = get_CSV(taskId,
+                                                     identify,
+                                                     model="val")
         confmat = evaluate(model,
                            test_loader,
                            device=device,
@@ -251,7 +255,7 @@ def main(args):
     start_time = time.time()
 
     # set[report]
-    acc_report, accg_report, iu_report = get_CSV(identify=identify)
+    acc_report, accg_report, iu_report = get_CSV(taskId, identify=identify)
 
     for epoch in range(args.epochs):
         train_one_epoch(model, criterion, optimizer, train_loader,
@@ -278,7 +282,7 @@ def main(args):
             },
             os.path.join(
                 args.output_dir,
-                '{model}_{epoch}_{identify}.pth'.format(model=args.model,
+                '{taskId}_{model}_{epoch}_{identify}.pth'.format(taskId=taskId,model=args.model,
                                                         epoch=epoch,
                                                         identify=identify)))
 
