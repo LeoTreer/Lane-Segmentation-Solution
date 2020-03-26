@@ -103,6 +103,7 @@ def get_criterion(name):
 
 
 def get_identify(taskId=None):
+    print(taskId)
     assert taskId == None or len(taskId) == 5, "taskId长度只能为5"
     import hashlib
     tmp = time.strftime("%y%m%d%H%M%S")
@@ -165,7 +166,7 @@ def get_CSV(taskId, identify, model="train"):
 
 
 def main(args):
-    taskId, identify = get_identify()
+    taskId, identify = get_identify(args.taskid)
 
     # criterion
     criterion = get_criterion(args.criterion)
@@ -382,6 +383,9 @@ def parse_args():
                         default='ce',
                         choices=("ce", "focal", "dice"),
                         help='criterion')
+    parser.add_argument('-t',
+                        "--taskid",
+                        help='trace report and checkpoint task')
     args = parser.parse_args()
     return args
 
