@@ -103,7 +103,6 @@ def get_criterion(name):
 
 
 def get_identify(taskId=None):
-    print(taskId)
     assert taskId == None or len(taskId) == 5, "taskId长度只能为5"
     import hashlib
     tmp = time.strftime("%y%m%d%H%M%S")
@@ -258,6 +257,7 @@ def main(args):
 
     if args.resume:
         optimizer.load_state_dict(checkpoint['optimizer'])
+        print(checkpoint['optimizer'])
 
     start_time = time.time()
 
