@@ -103,7 +103,7 @@ def get_criterion(name):
 
 
 def get_identify(taskId=None):
-    assert len(taskId) == 5, "taskId长度只能为5"
+    assert taskId == None or len(taskId) == 5, "taskId长度只能为5"
     import hashlib
     tmp = time.strftime("%y%m%d%H%M%S")
     hash = hashlib.md5()
@@ -144,16 +144,22 @@ def get_CSV(taskId, identify, model="train"):
              'bicycle')
     s = "{taskId}_{identify}_{fileName}.csv"
     acc_report = utils.CSVUtil(r"./",
-                               s.format(taskId=taskId, identify=identify, fileName= "acc"),
-                               title=title,,
+                               s.format(taskId=taskId,
+                                        identify=identify,
+                                        fileName="acc"),
+                               title=title,
                                model=model)
     accg_report = utils.CSVUtil(r"./",
-                                s.format(taskId=taskId, identify=identify, fileName= "accg"),
-                                title=("epoch", "accg"),,
+                                s.format(taskId=taskId,
+                                         identify=identify,
+                                         fileName="accg"),
+                                title=("epoch", "accg"),
                                 model=model)
     iu_report = utils.CSVUtil(r"./",
-                              s.format(taskId=taskId, identify=identify, fileName= "iu"),
-                              title=title,,
+                              s.format(taskId=taskId,
+                                       identify=identify,
+                                       fileName="iu"),
+                              title=title,
                               model=model)
     return acc_report, accg_report, iu_report
 
@@ -282,9 +288,11 @@ def main(args):
             },
             os.path.join(
                 args.output_dir,
-                '{taskId}_{model}_{epoch}_{identify}.pth'.format(taskId=taskId,model=args.model,
-                                                        epoch=epoch,
-                                                        identify=identify)))
+                '{taskId}_{model}_{epoch}_{identify}.pth'.format(
+                    taskId=taskId,
+                    model=args.model,
+                    epoch=epoch,
+                    identify=identify)))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
