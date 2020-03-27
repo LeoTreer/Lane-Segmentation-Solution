@@ -93,8 +93,10 @@ def focal_loss(predict,
     reduce_index = (1, 2, 3)
 
     predict = F.softmax(predict, 1)
-
+    print("[debug-afterSoftMax]".format(predict.unique()))
+    print("[debug-log]".format(predict.log()))
     input = torch.pow((1 - predict), gamma) * predict.log()
+
     return F.nll_loss(input, target, weight=weight, ignore_index=ignore_index)
 
 
@@ -114,16 +116,17 @@ def dice_loss(predict, target, epsilon=0.00001, weight=None, ignore_index=255):
     w, h = predict.shape[2:]
     reduce_index = (1, 2, 3)
 
-    onehot = utils.one_hot_encode(target, classes_num)
+    # onehot = utils.one_hot_encode(target, classes_num)
     predict = F.softmax(predict, 1)
 
-    denominator = torch.sum(predict, reduce_index) + torch.sum(
-        onehot, reduce_index) + epsilon
+    # denominator = torch.sum(predict, reduce_index) + torch.sum(
+    #     onehot, reduce_index) + epsilon
+    denominator = 2 * torch.sum(predict, reduce_index) + epsilon
 
     # nll函数出来的值已经取过负值
     dice = F.nll_loss(predict * w * h / denominator.view(-1, 1, 1, 1),
                       target,
-                      weight,
+                      weight=weight,
                       ignore_index=ignore_index)
 
     return 1 + 2 * dice

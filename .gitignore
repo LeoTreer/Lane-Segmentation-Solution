@@ -9,3 +9,4 @@ dataset/
 smallerdata/
 checkpoint/
 .zip/
+./output
