@@ -258,6 +258,7 @@ def main(args):
 
     if args.resume:
         optimizer.load_state_dict(checkpoint['optimizer'])
+        print(checkpoint['optimizer'])
 
     start_time = time.time()
 
