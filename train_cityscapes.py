@@ -53,7 +53,7 @@ def get_transform(train):
     crop_size = 480
 
     min_size = int((0.5 if train else 1.0) * base_size)
-    max_size = int((0.1 if train else 1.0) * base_size)
+    max_size = int((1 if train else 1.0) * base_size)
     transforms = []
     transforms.append(T.RandomResize(min_size, max_size))
     if train:
@@ -258,7 +258,6 @@ def main(args):
 
     if args.resume:
         optimizer.load_state_dict(checkpoint['optimizer'])
-        print(checkpoint['optimizer'])
 
     start_time = time.time()
 
