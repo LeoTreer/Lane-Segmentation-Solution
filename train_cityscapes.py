@@ -50,14 +50,15 @@ def evaluate(model, loader, device, num_classes, classes_name=None):
 
 def get_transform(train):
     base_size = 1024  # 等比缩放，只需要设置最短边
-    # crop_size = 480
+    crop_size = 480
 
-    min_size = int((0.25 if train else 1.0) * base_size)
-    max_size = int((0.5 if train else 1.0) * base_size)
+    min_size = int((0.5 if train else 1.0) * base_size)
+    max_size = int((0.1 if train else 1.0) * base_size)
     transforms = []
     transforms.append(T.RandomResize(min_size, max_size))
     if train:
-        pass  # 预留
+        transforms.append(T.RandomHorizontalFlip(0.5))
+        transforms.append(T.RandomCrop(crop_size))
     transforms.append(T.ToTensor())
     transforms.append(T.IdtoTrainId())
     transforms.append(T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]))

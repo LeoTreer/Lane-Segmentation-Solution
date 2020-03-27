@@ -6,6 +6,7 @@ import torch
 import torch.distributed as dist
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 
 import errno
@@ -307,6 +308,39 @@ def one_hot_encode(target, classes_num, ignore_index=None):
     n, h, w = target.shape
     return torch.zeros(n, classes_num, h,
                        w).to(target.device).scatter_(1, target.unsqueeze(1), 1)
+
+
+def parrallelShow(img1,
+                  img2,
+                  img3,
+                  cmap1="viridis",
+                  cmap2="viridis",
+                  cmap3="viridis",
+                  save=False):
+    """ 并列显示两张图片
+    """
+    import hashlib
+    tmp = time.strftime("%y%m%d%H%M%S")
+    hash = hashlib.md5()
+    hash.update(tmp.encode(encoding='utf-8'))
+    hash = hash.hexdigest()
+    plt.rcParams['savefig.dpi'] = 400  #图片像素
+    plt.figure()
+    plt.axis('on')
+    plt.subplot(1, 3, 1)
+    plt.title('Image')
+    plt.imshow(img1, cmap1)
+    plt.subplot(1, 3, 2)
+    plt.title('GroundTruth')
+    plt.imshow(img2, cmap2)
+    plt.subplot(1, 3, 3)
+    plt.title('Predict')
+    plt.imshow(img3, cmap3)
+    if save:
+        mkdir('./output')
+        plt.savefig('./output/{}'.format(hash[:5]))
+    else:
+        plt.show()
 
 
 # if __name__ == "__main__":

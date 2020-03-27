@@ -54,6 +54,46 @@ class LabelUtil(data.Dataset):
             label[label == id] = trainId
         return image, label
 
+    def trainId2Id(self, image, label):
+        label[label == LabelUtil.ignored] = 0
+        for trainId, id in enumerate(LabelUtil.id2tra):
+            label[label == trainId] = id
+        return image, label
+
+
+def pad_if_smaller(img, size, fill=0):
+    min_size = min(img.size)
+    if min_size < size:
+        ow, oh = img.size
+        padh = size - oh if oh < size else 0
+        padw = size - ow if ow < size else 0
+        img = F.pad(img, (0, 0, padw, padh), fill=fill)
+    return img
+
+
+class RandomHorizontalFlip(object):
+    def __init__(self, flip_prob):
+        self.flip_prob = flip_prob
+
+    def __call__(self, image, target):
+        if random.random() < self.flip_prob:
+            image = F.hflip(image)
+            target = F.hflip(target)
+        return image, target
+
+
+class RandomCrop(object):
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, image, target):
+        image = pad_if_smaller(image, self.size)
+        target = pad_if_smaller(target, self.size)
+        crop_params = T.RandomCrop.get_params(image, (self.size, self.size))
+        image = F.crop(image, *crop_params)
+        target = F.crop(target, *crop_params)
+        return image, target
+
 
 class Compose(object):
     def __init__(self, transforms):
